@@ -28,5 +28,5 @@ class Notifification:
 
     def __repr__(self):
         return f"Текст сообщения:\n{self.message}\n" +\
-            f"Сообщение прочитано: {'✅' if self.has_read else '❌'}\n"\
+            f"Сообщение прочитано: {'✅' if self.has_read else '❌'}\n" +\
             f"Время отправки: {self.time_sent}\n"

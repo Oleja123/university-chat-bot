@@ -7,10 +7,10 @@ from aiogram.filters import Command, CommandStart
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 
-from app.builders import inline_notification, inline_notifications
+from app.builders import inline_course, inline_courses, inline_notification, inline_notifications
 from app.exceptions.non_authorized_error import NonAuthorizedError
 from app.keyboards import login_kb
-from app.services import auth_service, notification_service
+from app.services import auth_service, notification_service, teacher_course_service
 
 
 router = Router()
@@ -74,6 +74,18 @@ async def notifications(message: Message, state: FSMContext):
         await message.reply(text='Уведомлений нет', reply_markup=None)
 
 
+@router.message(Command('courses'))
+@token_check
+async def courses(message: Message, state: FSMContext):
+    await state.clear()
+    user_id = message.from_user.id
+    res = await get_courses(user_id)
+    if res:
+        await message.reply(text='Список ваших курсов:', reply_markup=res)
+    else:
+        await message.reply(text='У вас нет курсов', reply_markup=None)
+
+
 @router.message(Login.username)
 async def enter_username_inter(message: Message, state: FSMContext):
     await state.update_data(username=message.text)
@@ -122,7 +134,7 @@ async def notifiactions_callback(callback: CallbackQuery):
 
 @router.callback_query(lambda c: c.data and c.data.startswith('notification:'))
 @token_check
-async def notifiaction_callback(callback: CallbackQuery):
+async def notification_callback(callback: CallbackQuery):
     user_id = callback.from_user.id
     notification = notification_service.get_by_id(int(callback.data.split(':')[-1]),
                                                   user_tokens[user_id]['token'])
@@ -133,7 +145,7 @@ async def notifiaction_callback(callback: CallbackQuery):
 
 @router.callback_query(lambda c: c.data and c.data.startswith('read_notification:'))
 @token_check
-async def notifiaction_read_callback(callback: CallbackQuery):
+async def notification_read_callback(callback: CallbackQuery):
     user_id = callback.from_user.id
     notification = notification_service.read(int(callback.data.split(':')[-1]),
                                              user_tokens[user_id]['token'])
@@ -144,10 +156,55 @@ async def notifiaction_read_callback(callback: CallbackQuery):
 
 @router.callback_query(lambda c: c.data and c.data.startswith('delete_notification:'))
 @token_check
-async def notifiaction_delete_callback(callback: CallbackQuery):
+async def notification_delete_callback(callback: CallbackQuery):
     user_id = callback.from_user.id
     notification_service.delete_notification(int(callback.data.split(':')[-1]),
                                              user_tokens[user_id]['token'])
     await callback.answer()
     await callback.message.edit_text(text='Уведомление успешно удалено\nВсе уведомления /notifications',
                                      reply_markup=None)
+
+
+async def get_courses(user_id, page=1):
+    courses = teacher_course_service.get_all_paginated(
+        int(user_tokens[user_id]['id']),
+        user_tokens[user_id]['token'],
+        page=page
+    )
+    logger.info(courses)
+    return await inline_courses(courses)
+
+
+@router.callback_query(lambda c: c.data and c.data.startswith('courses:'))
+@token_check
+async def courses_callback(callback: CallbackQuery):
+    page = int(callback.data.split(':')[-1])
+    user_id = callback.from_user.id
+    await callback.answer()
+    res = await get_courses(user_id, page)
+    if res:
+        await callback.message.edit_text(text='Список ваших курсов:', reply_markup=res)
+    else:
+        await callback.message.edit_text(text='У вас нет курсов', reply_markup=None)
+
+
+@router.callback_query(lambda c: c.data and c.data.startswith('course:'))
+@token_check
+async def course_callback(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    course = teacher_course_service.get_by_ids(int(callback.data.split(':')[-2]),
+                                               int(callback.data.split(':')[-1]),
+                                                  user_tokens[user_id]['token'])
+    await callback.answer()
+    await callback.message.edit_text(text=course.__repr__() + " \nВсе курсы /courses",
+                                     reply_markup=await inline_course(course))
+
+
+@router.callback_query(lambda c: c.data and c.data.startswith('download_sertificate:'))
+@token_check
+async def download_sertificate_callback(callback: CallbackQuery):
+    user_id = int(callback.data.split(':')[-2])
+    course_id = int(callback.data.split(':')[-1])
+    f = teacher_course_service.download_teacher_course(user_id, course_id, user_tokens[user_id]['token'])
+    await callback.answer()
+    await callback.message.answer_document(document=f, caption='Сертификат успешно отправлен')
