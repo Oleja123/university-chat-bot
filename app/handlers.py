@@ -18,7 +18,8 @@ class Login(StatesGroup):
 
 
 @router.message(CommandStart())
-async def cmd_start(message: Message):
+async def cmd_start(message: Message, state: FSMContext):
+    await state.clear() 
     await message.reply(f"Привет\nТвой id: {message.from_user.id}\n",
                         reply_markup=login_kb)
 
@@ -44,7 +45,17 @@ async def enter_password_inter(message: Message, state: FSMContext):
         res = auth_service.login(data['username'], data['password'])
         user_tokens[message.from_user.id] = res
         await state.update_data(token=res)
-        await message.answer(f"Ваш токен: {res}")
+        await message.answer(f"Ваш токен: {res['token']}")
     except Exception as e:
         await message.answer(f"Ошибка при авторизации: {e}")
     await state.clear()
+
+
+@router.message(Command('logout'))
+async def logout(message: Message):
+    user_id = message.from_user.id
+    if user_id not in user_tokens:
+        await message.answer('Вы не авторизованы')
+    else:
+        del user_tokens[message.from_user.id]
+        await message.answer('Вы успешно вышли из аккаунта')

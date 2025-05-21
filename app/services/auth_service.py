@@ -8,7 +8,7 @@ def login(username, password):
     response = requests.post(query, auth=(username,password))
     try:
         response.raise_for_status()
-        return response.json()['token']
+        return response.json()
     except requests.HTTPError as e:
         if response.status_code == 400:
             raise Exception("Пользователь не найден")
