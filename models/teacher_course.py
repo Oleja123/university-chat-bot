@@ -14,6 +14,8 @@ class TeacherCourse:
 
     @staticmethod
     def from_dict(data):
+        if data is None:
+            return None
         teacher_course = __class__()
         teacher_course.teacher_id = data['teacher_id']
         teacher_course.course_id = data['course_id']

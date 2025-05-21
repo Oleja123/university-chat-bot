@@ -11,7 +11,8 @@ from config import Config
 
 bot = Bot(token=Config.BOT_TOKEN)
 dp = Dispatcher()
-storage = MemoryStorage
+logger = None
+users_tokens = {}
 
 
 @dp.message(CommandStart())
@@ -28,4 +29,5 @@ if __name__ == '__main__':
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         filename='app.log'
     )
+    logging.getLogger(__name__)
     asyncio.run(main())

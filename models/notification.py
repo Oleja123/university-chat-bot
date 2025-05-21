@@ -14,6 +14,8 @@ class Notifification:
 
     @staticmethod
     def from_dict(data):
+        if data is None:
+            return None
         notification = __class__()
         notification.id = data['id']
         notification.message = data['message']
