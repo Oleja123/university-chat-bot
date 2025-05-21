@@ -100,7 +100,7 @@ async def notifications(message: Message):
 
 @router.callback_query(lambda c: c.data and c.data.startswith('notifications:'))
 @token_check
-async def callback(callback: CallbackQuery):
+async def notifiactions_callback(callback: CallbackQuery):
     page = int(callback.data.split(':')[-1])
     user_id = callback.from_user.id
     await callback.answer()
