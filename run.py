@@ -2,11 +2,12 @@ import asyncio
 import logging
 
 from aiogram import Bot, Dispatcher
-from aiogram.filters import CommandStart
+from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
 from config import Config
+from app.handlers import router
 
 
 bot = Bot(token=Config.BOT_TOKEN)
@@ -15,12 +16,8 @@ logger = None
 users_tokens = {}
 
 
-@dp.message(CommandStart())
-async def cmd_start(message: Message):
-    await message.answer('Привет')
-
-
 async def main():
+    dp.include_router(router)
     await dp.start_polling(bot)
 
 if __name__ == '__main__':

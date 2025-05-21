@@ -1,7 +1,6 @@
 import requests
 
 from config import Config
-from run import users_tokens
 
 
 def login(username, password):

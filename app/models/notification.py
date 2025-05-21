@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Optional
 
 
 @dataclass
@@ -8,6 +9,7 @@ class Notifification:
     message: str
     has_read: bool
     time_sent: datetime
+    self_url: Optional[str]
 
     def __init__():
         pass
@@ -22,4 +24,5 @@ class Notifification:
         notification.has_read = True if str(
             data['has_read']) == 'true' else False
         notification.time_sent = datetime.strptime(data['time_sent'])
+        notification.self_url = data['_links']['self']
         return notification
