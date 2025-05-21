@@ -46,8 +46,32 @@ async def cmd_start(message: Message, state: FSMContext):
 
 @router.message(Command('login'))
 async def enter_username(message: Message, state: FSMContext):
+    await state.clear()
     await state.set_state(Login.username)
     await message.answer('Введите имя пользователя')
+
+
+@router.message(Command('logout'))
+async def logout(message: Message, state: FSMContext):
+    await state.clear()
+    user_id = message.from_user.id
+    if user_id not in user_tokens:
+        await message.answer('Вы не авторизованы')
+    else:
+        del user_tokens[message.from_user.id]
+        await message.answer('Вы успешно вышли из аккаунта')
+
+
+@router.message(Command('notifications'))
+@token_check
+async def notifications(message: Message, state: FSMContext):
+    await state.clear()
+    user_id = message.from_user.id
+    res = await get_notifications(user_id)
+    if res:
+        await message.reply(text='Список ваших уведомлений:', reply_markup=res)
+    else:
+        await message.reply(text='Уведомлений нет', reply_markup=None)
 
 
 @router.message(Login.username)
@@ -73,16 +97,6 @@ async def enter_password_inter(message: Message, state: FSMContext):
     await state.clear()
 
 
-@router.message(Command('logout'))
-async def logout(message: Message):
-    user_id = message.from_user.id
-    if user_id not in user_tokens:
-        await message.answer('Вы не авторизованы')
-    else:
-        del user_tokens[message.from_user.id]
-        await message.answer('Вы успешно вышли из аккаунта')
-
-
 async def get_notifications(user_id, page=1):
     notifications = notification_service.get_all_paginated(
         int(user_tokens[user_id]['id']),
@@ -91,17 +105,6 @@ async def get_notifications(user_id, page=1):
     )
     logger.info(notifications)
     return await inline_notifications(notifications)
-
-
-@router.message(Command('notifications'))
-@token_check
-async def notifications(message: Message):
-    user_id = message.from_user.id
-    res = await get_notifications(user_id)
-    if res:
-        await message.reply(text='Список ваших уведомлений:', reply_markup=res)
-    else:
-        await message.reply(text='Уведомлений нет', reply_markup=None)
 
 
 @router.callback_query(lambda c: c.data and c.data.startswith('notifications:'))
@@ -144,7 +147,7 @@ async def notifiaction_read_callback(callback: CallbackQuery):
 async def notifiaction_delete_callback(callback: CallbackQuery):
     user_id = callback.from_user.id
     notification_service.delete_notification(int(callback.data.split(':')[-1]),
-                                                  user_tokens[user_id]['token'])
+                                             user_tokens[user_id]['token'])
     await callback.answer()
     await callback.message.edit_text(text='Уведомление успешно удалено\nВсе уведомления /notifications',
                                      reply_markup=None)
