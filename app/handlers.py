@@ -1,7 +1,7 @@
 from functools import wraps
 import logging
 
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram import Router
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.state import StatesGroup, State
@@ -31,8 +31,10 @@ def token_check(f):
                 raise NonAuthorizedError
             return await f(*args, **kwargs)
         except NonAuthorizedError:
+            logger.error(e)
             return await args[0].answer('Ошибка авторизации: введите команду /login, чтобы авторизоваться')
         except Exception as e:
+            logger.error(e)
             return await args[0].answer(str(e))
     return decorated_function
 
@@ -193,8 +195,9 @@ async def courses_callback(callback: CallbackQuery):
 async def course_callback(callback: CallbackQuery):
     user_id = callback.from_user.id
     course = teacher_course_service.get_by_ids(int(callback.data.split(':')[-2]),
-                                               int(callback.data.split(':')[-1]),
-                                                  user_tokens[user_id]['token'])
+                                               int(callback.data.split(
+                                                   ':')[-1]),
+                                               user_tokens[user_id]['token'])
     await callback.answer()
     await callback.message.edit_text(text=course.__repr__() + " \nВсе курсы /courses",
                                      reply_markup=await inline_course(course))
@@ -205,6 +208,10 @@ async def course_callback(callback: CallbackQuery):
 async def download_sertificate_callback(callback: CallbackQuery):
     user_id = int(callback.data.split(':')[-2])
     course_id = int(callback.data.split(':')[-1])
-    f = teacher_course_service.download_teacher_course(user_id, course_id, user_tokens[user_id]['token'])
+    f = teacher_course_service.download_teacher_course(
+        user_id, course_id, user_tokens[callback.from_user.id]['token'])
     await callback.answer()
-    await callback.message.answer_document(document=f, caption='Сертификат успешно отправлен')
+    await callback.message.answer_document(
+        document=FSInputFile(f.name, filename=f'Сертификат {user_id}:{course_id}'),
+        caption='Сертификат успешно отправлен'
+    )
