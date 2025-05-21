@@ -13,7 +13,6 @@ from app.handlers import router
 bot = Bot(token=Config.BOT_TOKEN)
 dp = Dispatcher()
 logger = None
-users_tokens = {}
 
 
 async def main():
