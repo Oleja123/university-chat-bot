@@ -63,7 +63,7 @@ def read(id: int, token: str):
     headers = {
         "Authorization": f"Bearer {token}"
     }
-    response = requests.get(query, headers=headers)
+    response = requests.put(query, headers=headers)
     try:
         response.raise_for_status()
         notifification = Notifification.from_dict(response.json())
@@ -85,7 +85,7 @@ def delete_notification(id: int, token: str):
     headers = {
         "Authorization": f"Bearer {token}"
     }
-    response = requests.get(query, headers=headers)
+    response = requests.delete(query, headers=headers)
     try:
         response.raise_for_status()
         logger.info(f"Уведомление пользователя {id} удалено")

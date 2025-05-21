@@ -7,7 +7,7 @@ from aiogram.filters import Command, CommandStart
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 
-from app.builders import inline_notifications
+from app.builders import inline_notification, inline_notifications
 from app.exceptions.non_authorized_error import NonAuthorizedError
 from app.keyboards import login_kb
 from app.services import auth_service, notification_service
@@ -16,6 +16,7 @@ from app.services import auth_service, notification_service
 router = Router()
 user_tokens = {}
 logger = logging.getLogger(__name__)
+
 
 class Login(StatesGroup):
     username = State()
@@ -31,6 +32,8 @@ def token_check(f):
             return await f(*args, **kwargs)
         except NonAuthorizedError:
             return await args[0].answer('Ошибка авторизации: введите команду /login, чтобы авторизоваться')
+        except Exception as e:
+            return await args[0].answer(str(e))
     return decorated_function
 
 
@@ -94,8 +97,11 @@ async def get_notifications(user_id, page=1):
 @token_check
 async def notifications(message: Message):
     user_id = message.from_user.id
-    await message.reply('Список твоих уведомлений:',
-                        reply_markup=await get_notifications(user_id))
+    res = await get_notifications(user_id)
+    if res:
+        await message.reply(text='Список ваших уведомлений:', reply_markup=res)
+    else:
+        await message.reply(text='Уведомлений нет', reply_markup=None)
 
 
 @router.callback_query(lambda c: c.data and c.data.startswith('notifications:'))
@@ -104,4 +110,41 @@ async def notifiactions_callback(callback: CallbackQuery):
     page = int(callback.data.split(':')[-1])
     user_id = callback.from_user.id
     await callback.answer()
-    return callback.message.edit_reply_markup(reply_markup=await get_notifications(user_id, page))
+    res = await get_notifications(user_id, page)
+    if res:
+        await callback.message.edit_text(text='Список ваших уведомлений:', reply_markup=res)
+    else:
+        await callback.message.edit_text(text='Уведомлений нет', reply_markup=None)
+
+
+@router.callback_query(lambda c: c.data and c.data.startswith('notification:'))
+@token_check
+async def notifiaction_callback(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    notification = notification_service.get_by_id(int(callback.data.split(':')[-1]),
+                                                  user_tokens[user_id]['token'])
+    await callback.answer()
+    await callback.message.edit_text(text=notification.__repr__() + " \nВсе уведомления /notifications",
+                                     reply_markup=await inline_notification(notification))
+
+
+@router.callback_query(lambda c: c.data and c.data.startswith('read_notification:'))
+@token_check
+async def notifiaction_read_callback(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    notification = notification_service.read(int(callback.data.split(':')[-1]),
+                                             user_tokens[user_id]['token'])
+    await callback.answer()
+    await callback.message.edit_text(text=notification.__repr__() + " \nВсе уведомления /notifications",
+                                     reply_markup=await inline_notification(notification))
+
+
+@router.callback_query(lambda c: c.data and c.data.startswith('delete_notification:'))
+@token_check
+async def notifiaction_delete_callback(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    notification_service.delete_notification(int(callback.data.split(':')[-1]),
+                                                  user_tokens[user_id]['token'])
+    await callback.answer()
+    await callback.message.edit_text(text='Уведомление успешно удалено\nВсе уведомления /notifications',
+                                     reply_markup=None)
