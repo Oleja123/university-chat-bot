@@ -22,6 +22,6 @@ class TeacherCourse:
         teacher_course.teacher_id = data['teacher_id']
         teacher_course.course_id = data['course_id']
         teacher_course.course_name = data['course_name']
-        teacher_course.date_approved = datetime.strptime(data['time_sent'])
+        teacher_course.date_approved = datetime.fromisoformat(data['date_approved'])
         teacher_course.self_url = data['_links']['self']
         return teacher_course

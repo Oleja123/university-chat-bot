@@ -2,9 +2,6 @@ import asyncio
 import logging
 
 from aiogram import Bot, Dispatcher
-from aiogram.filters import CommandStart, Command
-from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
 
 from config import Config
 from app.handlers import router
@@ -12,7 +9,6 @@ from app.handlers import router
 
 bot = Bot(token=Config.BOT_TOKEN)
 dp = Dispatcher()
-logger = None
 
 
 async def main():

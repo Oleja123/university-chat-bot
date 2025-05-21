@@ -1,10 +1,14 @@
+import logging
+
 import requests
 
 from app.exceptions.non_authorized_error import NonAuthorizedError
 from config import Config
-from models.notification import Notifification
-from services.from_json_collection import from_json_collection
-from run import logger
+from app.models.notification import Notifification
+from app.services.from_json_collection import from_json_collection
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_all_paginated(user_id: int, token: str, page: int = None) -> list[Notifification]:
@@ -15,16 +19,17 @@ def get_all_paginated(user_id: int, token: str, page: int = None) -> list[Notifi
         "Authorization": f"Bearer {token}"
     }
     response = requests.get(query, headers=headers)
+    logger.info(response)
     try:
         response.raise_for_status()
-        list = from_json_collection(response.json())
-        logger.info(f"Полученные уведомления пользователя {list['items']}")
-        return list
+        lst = from_json_collection(response.json(), Notifification)
+        logger.info(f"Полученные уведомления пользователя {lst['items']}")
+        return lst
     except requests.HTTPError as e:
         if response.status_code == 401:
             raise NonAuthorizedError("Ошибка авторизации")
         if response.status_code == 404:
-            raise Exception("Ресурс не найден")
+            raise ValueError("Ресурс не найден")
         raise Exception(f"Ошибка api")
     except Exception as e:
         logger.error(e)
@@ -46,7 +51,7 @@ def get_by_id(id: int, token: str):
         if response.status_code == 401:
             raise NonAuthorizedError("Ошибка авторизации")
         if response.status_code == 404:
-            raise Exception("Ресурс не найден")
+            raise ValueError("Ресурс не найден")
         raise Exception(f"Ошибка api")
     except Exception as e:
         logger.error(e)
@@ -68,7 +73,7 @@ def read(id: int, token: str):
         if response.status_code == 401:
             raise NonAuthorizedError("Ошибка авторизации")
         if response.status_code == 404:
-            raise Exception("Ресурс не найден")
+            raise ValueError("Ресурс не найден")
         raise Exception(f"Ошибка api")
     except Exception as e:
         logger.error(e)
@@ -88,7 +93,7 @@ def delete_notification(id: int, token: str):
         if response.status_code == 401:
             raise NonAuthorizedError("Ошибка авторизации")
         if response.status_code == 404:
-            raise Exception("Ресурс не найден")
+            raise ValueError("Ресурс не найден")
         raise Exception(f"Ошибка api")
     except Exception as e:
         logger.error(e)

@@ -1,6 +1,5 @@
 def from_json_collection(data: dict, cls):
-    data = data['items']
     res = []
-    for i in data:
+    for i in data['items']:
         res.append(cls.from_dict(i))
-    return {'items': res, 'next': data['_links']['next'], 'prev': data['_links']['prev']}
+    return {'items': res, '_meta': data['_meta']}

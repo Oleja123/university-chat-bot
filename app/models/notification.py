@@ -11,7 +11,7 @@ class Notifification:
     time_sent: datetime
     self_url: Optional[str]
 
-    def __init__():
+    def __init__(self):
         pass
 
     @staticmethod
@@ -23,6 +23,6 @@ class Notifification:
         notification.message = data['message']
         notification.has_read = True if str(
             data['has_read']) == 'true' else False
-        notification.time_sent = datetime.strptime(data['time_sent'])
+        notification.time_sent = datetime.fromisoformat(data['time_sent'])
         notification.self_url = data['_links']['self']
         return notification

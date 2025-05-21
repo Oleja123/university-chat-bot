@@ -11,11 +11,11 @@ def login(username, password):
         return response.json()
     except requests.HTTPError as e:
         if response.status_code == 400:
-            raise Exception("Пользователь не найден")
+            raise ValueError("Пользователь не найден")
         elif response.status_code == 401:
-            raise Exception("Неверный пароль")
+            raise ValueError("Неверный пароль")
         elif response.status_code == 403:
-            raise Exception("Пользователь заблокирован")
+            raise ValueError("Пользователь заблокирован")
         else:
             raise Exception(f"Ошибка api")
     except Exception as e:
