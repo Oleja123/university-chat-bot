@@ -9,7 +9,7 @@ from aiogram.fsm.context import FSMContext
 
 from app.builders import inline_course, inline_courses, inline_notification, inline_notifications
 from app.exceptions.non_authorized_error import NonAuthorizedError
-from app.keyboards import login_kb
+from app.keyboards import help_kb
 from app.services import auth_service, notification_service, teacher_course_service
 
 
@@ -30,7 +30,7 @@ def token_check(f):
             if args[0].from_user.id not in user_tokens:
                 raise NonAuthorizedError
             return await f(*args, **kwargs)
-        except NonAuthorizedError:
+        except NonAuthorizedError as e:
             logger.error(e)
             return await args[0].answer('Ошибка авторизации: введите команду /login, чтобы авторизоваться')
         except Exception as e:
@@ -42,8 +42,21 @@ def token_check(f):
 @router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
     await state.clear()
-    await message.reply(f"Привет\nТвой id: {message.from_user.id}\n",
-                        reply_markup=login_kb)
+    await message.reply(f"Привет\nОтправь команду /help, чтобы получить список команд\n",
+                        reply_markup=help_kb)
+    
+
+@router.message(Command('help'))
+async def help(message: Message, state: FSMContext):
+    await state.clear()
+    await state.set_state(Login.username)
+    await message.answer('Список команд\n' + \
+                         '/help - помощь\n' + \
+                         '/notifications - список уведомлений\n' + \
+                         '/courses - список курсов\n' + \
+                         '/login - вход в аккаунт\n' + \
+                         '/logout - выход из аккаунта\n')
+
 
 
 @router.message(Command('login'))
