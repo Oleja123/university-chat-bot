@@ -19,7 +19,7 @@ def get_all_paginated(user_id: int, token: str, page: int = None) -> list[Notifi
     headers = {
         "Authorization": f"Bearer {token}"
     }
-    response = requests.get(query, headers=headers)
+    response = requests.get(query, headers=headers, verify=False)
     try:
         response.raise_for_status()
         list = from_json_collection(response.json(), TeacherCourse)
@@ -43,7 +43,7 @@ def get_by_ids(user_id: int, course_id: int, token: str):
     headers = {
         "Authorization": f"Bearer {token}"
     }
-    response = requests.get(query, headers=headers)
+    response = requests.get(query, headers=headers, verify=False)
     try:
         response.raise_for_status()
         teaher_course = TeacherCourse.from_dict(response.json())
@@ -66,13 +66,14 @@ def download_teacher_course(user_id: int, course_id: int, token: str):
     headers = {
         "Authorization": f"Bearer {token}"
     }
-    response = requests.get(query, headers=headers)
+    response = requests.get(query, headers=headers, verify=False)
     try:
         response.raise_for_status()
         with open("temp.pdf", "wb") as f:
             f.write(response.content)
         return f
     except requests.HTTPError as e:
+        logger.error(e)
         if response.status_code == 401:
             raise NonAuthorizedError("Ошибка авторизации")
         if response.status_code == 404:

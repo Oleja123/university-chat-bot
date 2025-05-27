@@ -118,8 +118,10 @@ async def enter_password_inter(message: Message, state: FSMContext):
         await state.update_data(token=res)
         await message.answer(f"Ваш токен: {res['token']}")
     except ValueError as e:
+        logger.error(e)
         await message.answer(f"Ошибка при авторизации: {e}")
     except Exception as e:
+        logger.error(e)
         await message.answer(f"Неизвестная ошибка")
     await state.clear()
 

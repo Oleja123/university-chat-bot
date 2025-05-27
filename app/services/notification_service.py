@@ -18,7 +18,7 @@ def get_all_paginated(user_id: int, token: str, page: int = None) -> list[Notifi
     headers = {
         "Authorization": f"Bearer {token}"
     }
-    response = requests.get(query, headers=headers)
+    response = requests.get(query, headers=headers, verify=False)
     logger.info(response)
     try:
         response.raise_for_status()
@@ -26,6 +26,7 @@ def get_all_paginated(user_id: int, token: str, page: int = None) -> list[Notifi
         logger.info(f"Полученные уведомления пользователя {lst['items']}")
         return lst
     except requests.HTTPError as e:
+        logger.error(e)
         if response.status_code == 401:
             raise NonAuthorizedError("Ошибка авторизации")
         if response.status_code == 404:
@@ -41,13 +42,14 @@ def get_by_id(id: int, token: str):
     headers = {
         "Authorization": f"Bearer {token}"
     }
-    response = requests.get(query, headers=headers)
+    response = requests.get(query, headers=headers, verify=False)
     try:
         response.raise_for_status()
         notifification = Notifification.from_dict(response.json())
         logger.info(f"Полученное уведомление пользователя {notifification}")
         return notifification
     except requests.HTTPError as e:
+        logger.error(e)
         if response.status_code == 401:
             raise NonAuthorizedError("Ошибка авторизации")
         if response.status_code == 404:
@@ -63,13 +65,14 @@ def read(id: int, token: str):
     headers = {
         "Authorization": f"Bearer {token}"
     }
-    response = requests.put(query, headers=headers)
+    response = requests.put(query, headers=headers, verify=False)
     try:
         response.raise_for_status()
         notifification = Notifification.from_dict(response.json())
         logger.info(f"Прочитано уведомление пользователя {notifification}")
         return notifification
     except requests.HTTPError as e:
+        logger.error(e)
         if response.status_code == 401:
             raise NonAuthorizedError("Ошибка авторизации")
         if response.status_code == 404:
@@ -85,11 +88,12 @@ def delete_notification(id: int, token: str):
     headers = {
         "Authorization": f"Bearer {token}"
     }
-    response = requests.delete(query, headers=headers)
+    response = requests.delete(query, headers=headers, verify=False)
     try:
         response.raise_for_status()
         logger.info(f"Уведомление пользователя {id} удалено")
     except requests.HTTPError as e:
+        logger.error(e)
         if response.status_code == 401:
             raise NonAuthorizedError("Ошибка авторизации")
         if response.status_code == 404:

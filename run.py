@@ -1,3 +1,5 @@
+import urllib3
+
 import asyncio
 import logging
 
@@ -6,6 +8,8 @@ from aiogram import Bot, Dispatcher
 from config import Config
 from app.handlers import router
 
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 bot = Bot(token=Config.BOT_TOKEN)
 dp = Dispatcher()

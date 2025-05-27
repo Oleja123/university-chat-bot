@@ -1,11 +1,15 @@
+import logging
+
 import requests
 
 from config import Config
 
+logger = logging.getLogger(__name__)
 
 def login(username, password):
+    logger.info('Я ТУТ')
     query = Config.API_BASE_URL + f"/tokens"
-    response = requests.post(query, auth=(username,password))
+    response = requests.post(query, auth=(username,password), verify=False)
     try:
         response.raise_for_status()
         return response.json()
@@ -19,4 +23,5 @@ def login(username, password):
         else:
             raise Exception(f"Ошибка api")
     except Exception as e:
+        logger.error(e)
         raise Exception('Неизвестная ошибка')
