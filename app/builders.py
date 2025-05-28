@@ -45,17 +45,25 @@ async def inline_notification(data):
     return keyboard.as_markup()
 
 
-async def inline_courses(data):
+async def inline_courses(data, is_closest=False):
     keyboard = InlineKeyboardBuilder()
     for course in data['items']:
-        keyboard.add(InlineKeyboardButton(
-            text=f"{course.course_name} {'✅' if course.date_approved else ''}",
-            callback_data=f"course:{course.teacher_id}:{course.course_id}",
-        ))
-
+        if not is_closest:
+            keyboard.add(InlineKeyboardButton(
+                text=f"{course.course_name} {'✅' if course.date_approved else ''}",
+                callback_data=f"course:{course.teacher_id}:{course.course_id}",
+            ))
+        else:
+            keyboard.add(InlineKeyboardButton(
+                text=course.name,
+                callback_data='wersadas'
+            ))
     page = data['_meta']['page']
     total_pages = data['_meta']['total_pages']
     total_items = data['_meta']['total_items']
+    prefix = 'courses'
+    if is_closest:
+        prefix = 'closest_' + prefix
 
     if total_items == 0:
         return None
@@ -64,11 +72,11 @@ async def inline_courses(data):
     right = page+1 if page != total_pages else 1
 
     left_button = InlineKeyboardButton(
-        text="←", callback_data=f"courses:{left}")
+        text="←", callback_data=f"{prefix}:{left}")
     page_button = InlineKeyboardButton(
         text=f"{data['_meta']['page']}/{data['_meta']['total_pages']}", callback_data="None")
     right_button = InlineKeyboardButton(
-        text="→", callback_data=f"courses:{right}")
+        text="→", callback_data=f"{prefix}:{right}")
     keyboard.adjust(1)
     keyboard.row(left_button, page_button, right_button)
     return keyboard.as_markup()

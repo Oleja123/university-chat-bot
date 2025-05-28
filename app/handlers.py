@@ -54,6 +54,7 @@ async def help(message: Message, state: FSMContext):
                          '/help - помощь\n' + \
                          '/notifications - список уведомлений\n' + \
                          '/courses - список курсов\n' + \
+                         '/closest_courses - непройденные курсы с ближайшим дедлайном\n' + \
                          '/login - вход в аккаунт\n' + \
                          '/logout - выход из аккаунта\n')
 
@@ -97,6 +98,18 @@ async def courses(message: Message, state: FSMContext):
     res = await get_courses(user_id)
     if res:
         await message.reply(text='Список ваших курсов:', reply_markup=res)
+    else:
+        await message.reply(text='У вас нет курсов', reply_markup=None)
+
+
+@router.message(Command('closest_courses'))
+@token_check
+async def closest_courses(message: Message, state: FSMContext):
+    await state.clear()
+    user_id = message.from_user.id
+    res = await get_closest_courses(user_id)
+    if res:
+        await message.reply(text=f'Непройденные курсы с ближайшим дедлайном: {res[1]}', reply_markup=res[0])
     else:
         await message.reply(text='У вас нет курсов', reply_markup=None)
 
@@ -191,6 +204,17 @@ async def get_courses(user_id, page=1):
     logger.info(courses)
     return await inline_courses(courses)
 
+async def get_closest_courses(user_id, page=1):
+    courses = teacher_course_service.get_closest_paginated(
+        int(user_tokens[user_id]['id']),
+        user_tokens[user_id]['token'],
+        page=page
+    )
+    logger.info(courses)
+    inline = await inline_courses(courses[0], True)
+    return [inline, courses[1]]
+
+
 
 @router.callback_query(lambda c: c.data and c.data.startswith('courses:'))
 @token_check
@@ -230,3 +254,16 @@ async def download_sertificate_callback(callback: CallbackQuery):
         document=FSInputFile(f.name, filename=f'Сертификат {user_id}:{course_id}'),
         caption='Сертификат успешно отправлен'
     )
+
+
+@router.callback_query(lambda c: c.data and c.data.startswith('closest_courses:'))
+@token_check
+async def closest_courses_callback(callback: CallbackQuery):
+    page = int(callback.data.split(':')[-1])
+    user_id = callback.from_user.id
+    await callback.answer()
+    res = await get_closest_courses(user_id, page)
+    if res:
+        await callback.message.edit_text(text=f'Непройденные курсы с ближайшим дедлайном: {res[1]}', reply_markup=res[0])
+    else:
+        await callback.message.edit_text(text='Нет ближвйших курслв', reply_markup=None)

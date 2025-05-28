@@ -1,8 +1,10 @@
+from datetime import datetime
 import logging
 
 import requests
 
 from app.exceptions.non_authorized_error import NonAuthorizedError
+from app.models.course import Course
 from config import Config
 from app.models.notification import Notifification
 from app.models.teacher_course import TeacherCourse
@@ -12,7 +14,7 @@ from app.services.from_json_collection import from_json_collection
 logger = logging.getLogger(__name__)
 
 
-def get_all_paginated(user_id: int, token: str, page: int = None) -> list[Notifification]:
+def get_all_paginated(user_id: int, token: str, page: int = None) -> list[TeacherCourse]:
     if page is None:
         page = 1
     query = Config.API_BASE_URL + f"/users/{user_id}/courses?page={page}"
@@ -31,6 +33,32 @@ def get_all_paginated(user_id: int, token: str, page: int = None) -> list[Notifi
             raise NonAuthorizedError("Ошибка авторизации")
         if response.status_code == 404:
             raise Exception("Ресурс не найден")
+        raise Exception(f"Ошибка api")
+    except Exception as e:
+        logger.error(e)
+        raise Exception('Ошибка при запросе к API')
+    
+
+def get_closest_paginated(user_id: int, token: str, page: int = None) -> list[TeacherCourse]:
+    if page is None:
+        page = 1
+    query = Config.API_BASE_URL + f"/users/{user_id}/courses/closest?page={page}"
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+    response = requests.get(query, headers=headers, verify=False)
+    try:
+        response.raise_for_status()
+        list = from_json_collection(response.json(), Course)
+        logger.info(f"Полученные курсы пользователя {list['items']}")
+        deadline = datetime.fromisoformat(response.json()['deadline'])
+        return (list, deadline)
+    except requests.HTTPError as e:
+        logger.error(e)
+        if response.status_code == 401:
+            raise NonAuthorizedError("Ошибка авторизации")
+        if response.status_code == 404:
+            raise Exception("Ближайших курсов нет")
         raise Exception(f"Ошибка api")
     except Exception as e:
         logger.error(e)

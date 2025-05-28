@@ -6,6 +6,7 @@ help_kb = ReplyKeyboardMarkup(
         [KeyboardButton(text='/help')],
         [KeyboardButton(text='/notifications')],
         [KeyboardButton(text='/courses')],
+        [KeyboardButton(text='/closest_courses')],
         [KeyboardButton(text='/login')],
         [KeyboardButton(text='/logout')]
     ],
