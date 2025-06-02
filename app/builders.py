@@ -49,7 +49,7 @@ async def inline_courses(data):
     keyboard = InlineKeyboardBuilder()
     for course in data['items']:
         keyboard.add(InlineKeyboardButton(
-            text=f"{course.course_name} {'✅' if course.date_approved else ''}",
+            text=f"{course.course_name} {'✅' if course.date_completion else ''}",
             callback_data=f"course:{course.teacher_id}:{course.course_id}",
         ))
 
