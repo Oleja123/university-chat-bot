@@ -38,7 +38,6 @@ def get_all_paginated(user_id: int, token: str, page: int = None) -> list[Notifi
 
 
 def get_by_ids(user_id: int, course_id: int, token: str):
-    logger.info('Я ТУТ')
     query = Config.API_BASE_URL + f"/users/{user_id}/courses/{course_id}"
     headers = {
         "Authorization": f"Bearer {token}"
