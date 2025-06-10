@@ -4,7 +4,6 @@ import requests
 
 from app.exceptions.non_authorized_error import NonAuthorizedError
 from config import Config
-from app.models.notification import Notifification
 from app.models.teacher_course import TeacherCourse
 from app.services.from_json_collection import from_json_collection
 
@@ -12,7 +11,7 @@ from app.services.from_json_collection import from_json_collection
 logger = logging.getLogger(__name__)
 
 
-def get_all_paginated(user_id: int, token: str, page: int = None) -> list[Notifification]:
+def get_all_paginated(user_id: int, token: str, page: int = None) -> list[TeacherCourse]:
     if page is None:
         page = 1
     query = Config.API_BASE_URL + f"/users/{user_id}/courses?page={page}"
